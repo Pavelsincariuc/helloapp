@@ -19,7 +19,7 @@
 //     }
 // }
 //
-// class Program
+// class Pr
 // {
 //     static void Main()
 //     {
@@ -41,4 +41,4 @@
 //         var res2 = new SimpleResource();
 //         Console.WriteLine("Работаем с res2 (без using)...");
 //     }
-// }
+// } 

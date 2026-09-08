@@ -439,25 +439,59 @@
  //     }
  // }
 
- using System;
- using System.Linq;
-
- using var db = new AppDbContext();
-
-// 1. Добавляем запись в PostgreSQL
- db.Users.Add(new User { Name = "Павел", Email = "pavel@example.com" });
- db.SaveChanges();
- Console.WriteLine("Пользователь успешно сохранен в PostgreSQL!");
-
-// 2. Читаем из базы
- var user = db.Users.FirstOrDefault();
- Console.WriteLine($"Прочитано из базы: ID={user?.Id}, Имя={user?.Name}");
-
-
-  
+//  using System;
+//  using System.Linq;
+//
+//  using var db = new AppDbContext();
+//
+// // 1. Добавляем запись в PostgreSQL
+//  db.Users.Add(new User { Name = "Павел", Email = "pavel@example.com" });
+//  db.SaveChanges();
+//  Console.WriteLine("Пользователь успешно сохранен в PostgreSQL!");
+//
+// // 2. Читаем из базы
+//  var user = db.Users.FirstOrDefault();
+//  Console.WriteLine($"Прочитано из базы: ID={user?.Id}, Имя={user?.Name}");
 
 
 
+ using helloapp;
+ using Microsoft.EntityFrameworkCore;
 
+ using (var db = new AppDbContext())
+ {
+     // Очищаем старые записи
+     db.Users.RemoveRange(db.Users);
+     await db.SaveChangesAsync();
 
+     // Создаем пользователя с двумя заказами
+     var newUser = new User
+     {
+         Name = "Павел",
+         Email = "pavel@example.com",
+         Orders = new List<Order>
+         {
+             new Order { Description = "Ноутбук Apple MacBook Air", Amount = 1200.50m },
+             new Order { Description = "Беспроводная мышь", Amount = 45.00m }
+         }
+     };
+
+     await db.Users.AddAsync(newUser);
+     await db.SaveChangesAsync();
+
+     // Запрашиваем из базы вместе с заказами
+     var usersWithOrders = await db.Users
+         .Include(u => u.Orders)
+         .ToListAsync();
+
+     foreach (var user in usersWithOrders)
+     {
+         Console.WriteLine($"\nПользователь: {user.Name} ({user.Email})");
+         Console.WriteLine("Заказы:");
+         foreach (var order in user.Orders)
+         {
+             Console.WriteLine($" - [{order.CreatedAt:yyyy-MM-dd}] {order.Description}: ${order.Amount}");
+         }
+     }
+ }
 
