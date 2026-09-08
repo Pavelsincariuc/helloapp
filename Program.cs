@@ -458,35 +458,24 @@
 
  using (var db = new AppDbContext())
  {
-     // 1. Создаем объект пользователя "Мария"
-     var maria = new User
+     // 1. Находим конкретный заказ Марии (например, кофеварку)
+     var orderToDelete = await db.Orders
+         .FirstOrDefaultAsync(o => o.Description == "Кофеварка");
+
+     // 2. Проверяем, найден ли заказ
+     if (orderToDelete != null)
      {
-         Name = "Мария",
-         Email = "maria@example.com",
-        
-         // Сразу добавляем ей список заказов
-         Orders = new List<Order>
-         {
-             new Order 
-             { 
-                 Description = "Книга по C# и .NET", 
-                 Amount = 35.00m, 
-                 RecipientName = "Мария Петрова" 
-             },
-             new Order 
-             { 
-                 Description = "Кофеварка", 
-                 Amount = 150.00m, 
-                 RecipientName = "Мария Петрова" 
-             }
-         }
-     };
+         // 3. Помечаем объект на удаление
+         db.Orders.Remove(orderToDelete);
 
-     // 2. Говорим EF Core: "Подготовь к добавлению Марию вместе с её заказами"
-     await db.Users.AddAsync(maria);
+         // 4. Отправляем изменения в PostgreSQL (выполняется SQL-команда DELETE)
+         await db.SaveChangesAsync();
 
-     // 3. Сохраняем в PostgreSQL (Здесь происходит транзакция!)
-     await db.SaveChangesAsync();
-
-     Console.WriteLine("Мария и её заказы успешно добавлены!");
+         Console.WriteLine($"Заказ '{orderToDelete.Description}' успешно удален!");
+     }
+     else
+     {
+         Console.WriteLine("Заказ не найден.");
+     }
  }
+ 
