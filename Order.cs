@@ -7,8 +7,9 @@ public class Order
     public decimal Amount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    
+   
+    public string RecipientName { get; set; } = string.Empty;
+
     public int UserId { get; set; }
-    
     public User User { get; set; } = null!;
 }
