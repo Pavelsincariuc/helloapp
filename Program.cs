@@ -453,45 +453,40 @@
 //  var user = db.Users.FirstOrDefault();
 //  Console.WriteLine($"Прочитано из базы: ID={user?.Id}, Имя={user?.Name}");
 
-
-
  using helloapp;
  using Microsoft.EntityFrameworkCore;
 
  using (var db = new AppDbContext())
  {
-     // Очищаем старые записи
-     db.Users.RemoveRange(db.Users);
-     await db.SaveChangesAsync();
-
-     // Создаем пользователя с двумя заказами
-     var newUser = new User
+     // 1. Создаем объект пользователя "Мария"
+     var maria = new User
      {
-         Name = "Павел",
-         Email = "pavel@example.com",
+         Name = "Мария",
+         Email = "maria@example.com",
+        
+         // Сразу добавляем ей список заказов
          Orders = new List<Order>
          {
-             new Order { Description = "Ноутбук Apple MacBook Air", Amount = 1200.50m },
-             new Order { Description = "Беспроводная мышь", Amount = 45.00m }
+             new Order 
+             { 
+                 Description = "Книга по C# и .NET", 
+                 Amount = 35.00m, 
+                 RecipientName = "Мария Петрова" 
+             },
+             new Order 
+             { 
+                 Description = "Кофеварка", 
+                 Amount = 150.00m, 
+                 RecipientName = "Мария Петрова" 
+             }
          }
      };
 
-     await db.Users.AddAsync(newUser);
+     // 2. Говорим EF Core: "Подготовь к добавлению Марию вместе с её заказами"
+     await db.Users.AddAsync(maria);
+
+     // 3. Сохраняем в PostgreSQL (Здесь происходит транзакция!)
      await db.SaveChangesAsync();
 
-     // Запрашиваем из базы вместе с заказами
-     var usersWithOrders = await db.Users
-         .Include(u => u.Orders)
-         .ToListAsync();
-
-     foreach (var user in usersWithOrders)
-     {
-         Console.WriteLine($"\nПользователь: {user.Name} ({user.Email})");
-         Console.WriteLine("Заказы:");
-         foreach (var order in user.Orders)
-         {
-             Console.WriteLine($" - [{order.CreatedAt:yyyy-MM-dd}] {order.Description}: ${order.Amount}");
-         }
-     }
+     Console.WriteLine("Мария и её заказы успешно добавлены!");
  }
-
