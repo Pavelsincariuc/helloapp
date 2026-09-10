@@ -458,24 +458,47 @@
 
  using (var db = new AppDbContext())
  {
-     // 1. Находим конкретный заказ Марии (например, кофеварку)
-     var orderToDelete = await db.Orders
-         .FirstOrDefaultAsync(o => o.Description == "Кофеварка");
+     
+     using var transaction = await db.Database.BeginTransactionAsync();
 
-     // 2. Проверяем, найден ли заказ
-     if (orderToDelete != null)
+     try
      {
-         // 3. Помечаем объект на удаление
-         db.Orders.Remove(orderToDelete);
+         Console.WriteLine("--- Начинаем транзакцию ---");
 
-         // 4. Отправляем изменения в PostgreSQL (выполняется SQL-команда DELETE)
-         await db.SaveChangesAsync();
+    
+         var maria = await db.Users.FirstOrDefaultAsync(u => u.Name == "Мария");
+         if (maria == null)
+         {
+             throw new Exception("Пользователь 'Мария' не найден в базе!");
+         }
 
-         Console.WriteLine($"Заказ '{orderToDelete.Description}' успешно удален!");
+        
+         var newOrder = new Order
+         {
+             Description = "Беспроводные наушники",
+             Amount = 120.00m,
+             RecipientName = "Мария Петрова",
+             UserId = maria.Id
+         };
+         await db.Orders.AddAsync(newOrder);
+         await db.SaveChangesAsync(); 
+
+         Console.WriteLine("Заказ подготвлен к записи...");
+
+         
+         throw new Exception("Сбой сети! Транзакция должна отмениться!");
+
+      
+         await transaction.CommitAsync();
+
+         Console.WriteLine("УСПЕХ: Транзакция успешно зафиксирована (Commit)!");
      }
-     else
+     catch (Exception ex)
      {
-         Console.WriteLine("Заказ не найден.");
+        
+         await transaction.RollbackAsync();
+
+         Console.WriteLine($"ОШИБКА: {ex.Message}");
+         Console.WriteLine("ОТКАТ: Никакие изменения НЕ записались в PostgreSQL!");
      }
  }
- 
