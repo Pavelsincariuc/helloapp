@@ -453,52 +453,82 @@
 //  var user = db.Users.FirstOrDefault();
 //  Console.WriteLine($"Прочитано из базы: ID={user?.Id}, Имя={user?.Name}");
 
+ // using helloapp;
+ // using Microsoft.EntityFrameworkCore;
+ //
+ // using (var db = new AppDbContext())
+ // {
+ //     
+ //     using var transaction = await db.Database.BeginTransactionAsync();
+ //
+ //     try
+ //     {
+ //         Console.WriteLine("--- Начинаем транзакцию ---");
+ //
+ //    
+ //         var maria = await db.Users.FirstOrDefaultAsync(u => u.Name == "Мария");
+ //         if (maria == null)
+ //         {
+ //             throw new Exception("Пользователь 'Мария' не найден в базе!");
+ //         }
+ //
+ //        
+ //         var newOrder = new Order
+ //         {
+ //             Description = "Беспроводные наушники",
+ //             Amount = 120.00m,
+ //             RecipientName = "Мария Петрова",
+ //             UserId = maria.Id
+ //         };
+ //         await db.Orders.AddAsync(newOrder);
+ //         await db.SaveChangesAsync(); 
+ //
+ //         Console.WriteLine("Заказ подготвлен к записи...");
+ //
+ //         
+ //         // throw new Exception("Сбой сети! Транзакция должна отмениться!");
+ //
+ //      
+ //         await transaction.CommitAsync();
+ //
+ //         Console.WriteLine("УСПЕХ: Транзакция успешно зафиксирована (Commit)!");
+ //     }
+ //     catch (Exception ex)
+ //     {
+ //        
+ //         await transaction.RollbackAsync();
+ //
+ //         Console.WriteLine($"ОШИБКА: {ex.Message}");
+ //         Console.WriteLine("ОТКАТ: Никакие изменения НЕ записались в PostgreSQL!");
+ //     }
+ // }
+ 
  using helloapp;
  using Microsoft.EntityFrameworkCore;
 
- using (var db = new AppDbContext())
+ class Program
  {
-     
-     using var transaction = await db.Database.BeginTransactionAsync();
-
-     try
+     static async Task Main(string[] args)
      {
-         Console.WriteLine("--- Начинаем транзакцию ---");
 
-    
-         var maria = await db.Users.FirstOrDefaultAsync(u => u.Name == "Мария");
-         if (maria == null)
+         using var ex2 = new AppDbContext();
+
+
+         await CancelOrderAsync(ex2);
+     }
+
+     static async Task CancelOrderAsync(AppDbContext db)
+     {
+         var orders = await db.Orders
+             .FirstOrDefaultAsync(o => o.Description == "Книга по C# и .NET");
+
+         if (orders == null)
          {
-             throw new Exception("Пользователь 'Мария' не найден в базе!");
+             Console.WriteLine("Заказ не найден.");
+             return;
          }
-
-        
-         var newOrder = new Order
-         {
-             Description = "Беспроводные наушники",
-             Amount = 120.00m,
-             RecipientName = "Мария Петрова",
-             UserId = maria.Id
-         };
-         await db.Orders.AddAsync(newOrder);
-         await db.SaveChangesAsync(); 
-
-         Console.WriteLine("Заказ подготвлен к записи...");
-
-         
-         throw new Exception("Сбой сети! Транзакция должна отмениться!");
-
-      
-         await transaction.CommitAsync();
-
-         Console.WriteLine("УСПЕХ: Транзакция успешно зафиксирована (Commit)!");
+         orders.IsCanceled = true;
+         await db.SaveChangesAsync();
      }
-     catch (Exception ex)
-     {
-        
-         await transaction.RollbackAsync();
 
-         Console.WriteLine($"ОШИБКА: {ex.Message}");
-         Console.WriteLine("ОТКАТ: Никакие изменения НЕ записались в PostgreSQL!");
-     }
  }
