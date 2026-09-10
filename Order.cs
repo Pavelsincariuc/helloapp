@@ -12,4 +12,6 @@ public class Order
 
     public int UserId { get; set; }
     public User User { get; set; } = null!;
+    
+    public bool IsCanceled { get; set; } = false;
 }
